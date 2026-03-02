@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام التمويل المحاسبي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --navy:#0a1628; --navy2:#112240; --accent:#00d4aa; --accent2:#f0a500;
+  --gold:#c9a227; --text:#e8edf5; --muted:#8899b4;
+  --card:rgba(17,34,64,0.85); --border:rgba(0,212,170,0.15); --sw:260px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Cairo',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(0,212,170,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(26,58,107,0.4) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+/* ── LOGIN / REGISTER SCREEN ── */
+#loginScreen{position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;}
+#loginScreen.hidden{display:none;}
+.login-box{background:rgba(17,34,64,0.95);border:1px solid var(--border);border-radius:20px;padding:40px;width:420px;max-width:95vw;text-align:center;backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.login-box h2{font-size:22px;font-weight:900;margin-bottom:6px;}
+.login-box p{font-size:13px;color:var(--muted);margin-bottom:28px;}
+.login-box .form-group{margin-bottom:16px;text-align:right;}
+.login-box .form-label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px;font-weight:600;}
+.login-box .form-input{width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:14px;outline:none;transition:border .2s;}
+.login-box .form-input:focus{border-color:var(--accent);}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--accent),#00a884);color:var(--navy);border:none;cursor:pointer;padding:13px;border-radius:10px;font-family:'Cairo',sans-serif;font-weight:900;font-size:15px;margin-top:8px;transition:all .2s;box-shadow:0 4px 20px rgba(0,212,170,0.3);}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,212,170,0.4);}
+.login-btn-sec{width:100%;background:transparent;color:var(--text);border:1px solid var(--border);cursor:pointer;padding:12px;border-radius:10px;font-family:'Cairo',sans-serif;font-weight:700;font-size:14px;margin-top:8px;transition:all .2s;}
+.login-btn-sec:hover{border-color:var(--accent);color:var(--accent);}
+.login-error{background:rgba(255,107,107,0.15);color:#ff6b6b;border:1px solid rgba(255,107,107,0.3);border-radius:8px;padding:10px;font-size:13px;margin-top:12px;display:none;}
+.login-error.show{display:block;}
+.login-success{background:rgba(0,212,170,0.1);color:var(--accent);border:1px solid rgba(0,212,170,0.3);border-radius:8px;padding:10px;font-size:13px;margin-top:12px;display:none;}
+.login-success.show{display:block;}
+.switch-link{margin-top:18px;font-size:13px;color:var(--muted);}
+.switch-link span{color:var(--accent);cursor:pointer;font-weight:700;}
+.switch-link span:hover{text-decoration:underline;}
+.auth-panel{display:none;}
+.auth-panel.active{display:block;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sw);background:linear-gradient(180deg,#0d1f3c 0%,#091528 100%);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;bottom:0;z-index:100;box-shadow:-4px 0 30px rgba(0,0,0,0.4);}
+.logo{padding:28px 24px 20px;border-bottom:1px solid var(--border);}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#00a884);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,212,170,0.3);}
+.logo h2{font-size:16px;font-weight:700;line-height:1.3;}
+.logo span{font-size:11px;color:var(--accent);}
+nav{flex:1;padding:16px 0;overflow-y:auto;}
+.nav-section{padding:8px 16px 4px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;transition:all .2s;border-right:3px solid transparent;font-size:14px;color:var(--muted);position:relative;}
+.nav-item:hover{background:rgba(0,212,170,0.07);color:var(--text);}
+.nav-item.active{background:rgba(0,212,170,0.12);border-right-color:var(--accent);color:var(--accent);font-weight:600;}
+.nav-item .icon{font-size:18px;min-width:22px;text-align:center;}
+.badge{margin-right:auto;background:var(--accent);color:var(--navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border);}
+.user-card{display:flex;align-items:center;gap:12px;}
+.avatar{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--navy);}
+.user-info{flex:1;}
+.user-name{font-size:13px;font-weight:600;}
+.user-role{font-size:11px;color:var(--muted);}
+.logout-btn{background:rgba(255,107,107,0.15);color:#ff6b6b;border:1px solid rgba(255,107,107,0.2);border-radius:8px;padding:7px 12px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:600;width:100%;margin-top:10px;transition:all .2s;}
+.logout-btn:hover{background:rgba(255,107,107,0.3);}
+
+/* ── MAIN ── */
+.main{margin-right:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;background:rgba(10,22,40,0.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
+.page-title h1{font-size:20px;font-weight:700;}
+.page-title p{font-size:12px;color:var(--muted);margin-top:2px;}
+.topbar-actions{display:flex;align-items:center;gap:12px;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#00a884);color:var(--navy);border:none;cursor:pointer;padding:9px 18px;border-radius:8px;font-family:'Cairo',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;transition:all .2s;box-shadow:0 4px 15px rgba(0,212,170,0.25);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,170,0.35);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);padding:9px 16px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:13px;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-pdf{background:rgba(255,107,107,0.15);color:#ff6b6b;border:1px solid rgba(255,107,107,0.3);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .2s;}
+.btn-pdf:hover{background:rgba(255,107,107,0.25);}
+.search-bar{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;width:220px;outline:none;transition:border .2s;}
+.search-bar:focus{border-color:var(--accent);}
+.search-bar::placeholder{color:var(--muted);}
+.content{padding:28px 32px;flex:1;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.content{animation:fadeIn .4s ease;}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:28px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 20px;position:relative;overflow:hidden;backdrop-filter:blur(10px);transition:transform .2s;}
+.stat-card:hover{transform:translateY(-3px);}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;opacity:.08;transform:translate(20px,-20px);}
+.stat-card.green::before{background:var(--accent)}.stat-card.gold::before{background:var(--gold)}.stat-card.blue::before{background:#4a9eff}.stat-card.red::before{background:#ff6b6b}
+.stat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;}
+.stat-card.green .stat-icon{background:rgba(0,212,170,0.15)}.stat-card.gold .stat-icon{background:rgba(201,162,39,0.15)}.stat-card.blue .stat-icon{background:rgba(74,158,255,0.15)}.stat-card.red .stat-icon{background:rgba(255,107,107,0.15)}
+.stat-value{font-size:26px;font-weight:900;margin-bottom:4px;}
+.stat-card.green .stat-value{color:var(--accent)}.stat-card.gold .stat-value{color:var(--gold)}.stat-card.blue .stat-value{color:#4a9eff}.stat-card.red .stat-value{color:#ff6b6b}
+.stat-label{font-size:12px;color:var(--muted);}
+.stat-change{font-size:11px;margin-top:8px;}
+.stat-change.up{color:var(--accent)}.stat-change.down{color:#ff6b6b}
+
+/* ── CARDS / TABLES ── */
+.grid-3{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;margin-bottom:24px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(10px);overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);}
+.card-title{font-size:14px;font-weight:700;}
+.card-body{padding:20px;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:right;padding:10px 14px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);font-weight:600;}
+td{padding:13px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(0,212,170,0.04);}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.status-paid{background:rgba(0,212,170,0.15);color:var(--accent);}
+.status-pending{background:rgba(240,165,0,0.15);color:var(--accent2);}
+.status-overdue{background:rgba(255,107,107,0.15);color:#ff6b6b;}
+.client-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.client-item:last-child{border-bottom:none;}
+.client-avatar{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+.client-amount{margin-right:auto;font-size:13px;font-weight:700;color:var(--accent);}
+.quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.action-btn{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;}
+.action-btn:hover{background:rgba(0,212,170,0.1);border-color:var(--accent);transform:translateY(-2px);}
+.action-btn .icon{font-size:26px;margin-bottom:8px;}
+.action-btn .label{font-size:12px;font-weight:600;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.active{display:flex;}
+.modal{background:#0d1f3c;border:1px solid var(--border);border-radius:18px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:22px 24px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:16px;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;line-height:1;}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:24px;}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px;font-weight:600;}
+.form-input,.form-select{width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;transition:border .2s;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);}
+.form-select option{background:#0d1f3c;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* ── PAGE VIEW ── */
+.page-view{display:none;}
+.page-view.active{display:block;}
+
+/* ── PERMISSIONS ── */
+.perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+.perm-item{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:10px 14px;}
+.perm-label{font-size:13px;}
+.toggle{width:44px;height:24px;background:rgba(255,255,255,0.15);border-radius:20px;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:3px;right:3px;transition:transform .3s;}
+.toggle.on::after{transform:translateX(-20px);}
+
+/* ── DOCUMENTS UPLOAD ── */
+.doc-upload-area{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;margin-top:8px;}
+.doc-upload-area:hover{border-color:var(--accent);background:rgba(0,212,170,0.05);}
+.doc-upload-area input{display:none;}
+.doc-list{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+.doc-item{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;}
+.doc-item .doc-name{color:var(--accent);}
+.doc-remove{background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:16px;line-height:1;}
+
+/* ── SETTINGS ── */
+.settings-section{margin-bottom:28px;}
+.settings-title{font-size:14px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.settings-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.settings-label{font-size:13px;}
+.settings-desc{font-size:11px;color:var(--muted);margin-top:3px;}
+.mini-chart{height:80px;display:flex;align-items:flex-end;gap:6px;}
+.bar{flex:1;background:rgba(0,212,170,0.2);border-radius:4px 4px 0 0;transition:background .2s;cursor:pointer;}
+.bar:hover{background:rgba(0,212,170,0.5);}
+.bar.highlight{background:var(--accent);}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:rgba(0,212,170,0.3);border-radius:2px;}
+
+/* ── PRINT PDF ── */
+.print-area{display:none;}
+@media print{
+  body > *:not(.print-area){display:none !important;}
+  .print-area{display:block !important;direction:rtl;font-family:'Cairo',sans-serif;color:#000;padding:30px;}
+  .print-header{text-align:center;border-bottom:2px solid #00d4aa;padding-bottom:15px;margin-bottom:20px;}
+  .print-header h1{font-size:22px;color:#0a1628;}
+  .print-header p{font-size:13px;color:#666;}
+  .print-table{width:100%;border-collapse:collapse;margin-top:15px;}
+  .print-table th{background:#0a1628;color:white;padding:10px;text-align:right;font-size:12px;}
+  .print-table td{padding:9px 10px;border-bottom:1px solid #eee;font-size:12px;}
+  .print-footer{margin-top:30px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:15px;}
+}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- LOGIN SCREEN                               -->
+<!-- ══════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+
+    <!-- ── تسجيل الدخول ── -->
+    <div class="auth-panel active" id="panelLogin">
+      <h2>نظام التمويل المحاسبي</h2>
+      <p>سجّل دخولك للمتابعة</p>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input class="form-input" id="loginEmail" type="email" placeholder="email@example.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <input class="form-input" id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <button class="login-btn" onclick="doLogin()">🔐 تسجيل الدخول</button>
+      <button class="login-btn-sec" onclick="switchPanel('register')">➕ إنشاء حساب جديد</button>
+      <div style="margin-top:14px;">
+        <span onclick="switchPanel('forgot')" style="font-size:13px;color:var(--muted);cursor:pointer;">نسيت كلمة المرور؟ <span style="color:var(--accent);font-weight:700;">استعادتها</span></span>
+      </div>
+      <div class="login-error" id="loginError">بيانات الدخول غير صحيحة</div>
+    </div>
+
+    <!-- ── نسيت كلمة المرور ── -->
+    <div class="auth-panel" id="panelForgot">
+      <div style="font-size:40px;margin-bottom:16px;">🔑</div>
+      <h2>نسيت كلمة المرور؟</h2>
+      <p>أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور</p>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input class="form-input" id="forgotEmail" type="email" placeholder="email@example.com" onkeydown="if(event.key==='Enter')doForgot()" />
+      </div>
+      <button class="login-btn" onclick="doForgot()">📧 إرسال رابط الاستعادة</button>
+      <button class="login-btn-sec" onclick="switchPanel('login')">🔙 العودة لتسجيل الدخول</button>
+      <div class="login-error" id="forgotError"></div>
+      <div class="login-success" id="forgotSuccess">✅ تم الإرسال! تحقق من بريدك الإلكتروني</div>
+    </div>
+
+    <!-- ── تسجيل حساب جديد ── -->
+    <div class="auth-panel" id="panelRegister">
+      <h2>إنشاء حساب جديد</h2>
+      <p>أدخل بياناتك لإنشاء حسابك</p>
+      <div class="form-group">
+        <label class="form-label">الاسم الكامل</label>
+        <input class="form-input" id="regName" placeholder="مثال: أحمد محمد" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input class="form-input" id="regEmail" type="email" placeholder="email@example.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <input class="form-input" id="regPass" type="password" placeholder="••••••••" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">تأكيد كلمة المرور</label>
+        <input class="form-input" id="regPass2" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()" />
+      </div>
+      <button class="login-btn" onclick="doRegister()">✅ إنشاء الحساب</button>
+      <button class="login-btn-sec" onclick="switchPanel('login')">🔙 العودة لتسجيل الدخول</button>
+      <div class="login-error" id="regError"></div>
+      <div class="login-success" id="regSuccess">✅ تم إنشاء الحساب! انتظر موافقة المدير للدخول.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SIDEBAR                                    -->
+<!-- ══════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">💼</div>
+    <h2>نظام المحاسبة</h2>
+    <span>إدارة التمويل والأعمال</span>
+  </div>
+  <nav>
+    <div class="nav-section">الرئيسية</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span> لوحة التحكم</div>
+    <div class="nav-section">إدارة</div>
+    <div class="nav-item" onclick="showPage('clients')"><span class="icon">👥</span> العملاء</div>
+    <div class="nav-item" onclick="showPage('bonds')"><span class="icon">📋</span> السندات</div>
+    <div class="nav-item" onclick="showPage('invoices')"><span class="icon">🧾</span> الفواتير</div>
+    <div class="nav-item" id="navUsers" onclick="showPage('users')"><span class="icon">👤</span> المستخدمون</div>
+    <div class="nav-section">المالية</div>
+    <div class="nav-item" onclick="showPage('reports')"><span class="icon">📈</span> التقارير</div>
+    <div class="nav-item" onclick="showPage('settings')"><span class="icon">⚙️</span> الإعدادات</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="avatar" id="sidebarAvatar">م</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebarName">...</div>
+        <div class="user-role" id="sidebarRole">...</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- MAIN                                       -->
+<!-- ══════════════════════════════════════════ -->
+<main class="main">
+  <div class="topbar">
+    <div class="page-title">
+      <h1 id="pageTitle">لوحة التحكم</h1>
+      <p id="pageSubtitle">مرحباً بك</p>
+    </div>
+    <div class="topbar-actions">
+      <input class="search-bar" placeholder="🔍  بحث..." />
+      <button class="btn-outline" onclick="showModal('clientModal')">➕ عميل جديد</button>
+      <button class="btn-primary" onclick="showModal('invoiceModal')">🧾 فاتورة جديدة</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page-view active" id="page-dashboard">
+      <div class="stats-grid" id="dashStats">
+        <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">--</div><div class="stat-label">إجمالي الإيرادات (ريال)</div></div>
+        <div class="stat-card gold"><div class="stat-icon">📋</div><div class="stat-value">--</div><div class="stat-label">الفواتير النشطة</div></div>
+        <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value">--</div><div class="stat-label">إجمالي العملاء</div></div>
+        <div class="stat-card red"><div class="stat-icon">⚠️</div><div class="stat-value">--</div><div class="stat-label">مستحقات متأخرة (ريال)</div></div>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🧾 آخر الفواتير</span>
+            <button class="btn-outline" style="padding:6px 12px;font-size:12px;" onclick="showPage('invoices')">عرض الكل</button>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table><thead><tr><th>رقم الفاتورة</th><th>العميل</th><th>المبلغ</th><th>الحالة</th></tr></thead>
+            <tbody id="recentInvoicesTbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">⏳ جاري التحميل...</td></tr></tbody></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">⭐ أفضل العملاء</span></div>
+          <div class="card-body" id="topClientsList"><div style="color:var(--muted);text-align:center;padding:20px">⏳ جاري التحميل...</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header"><span class="card-title">⚡ إجراءات سريعة</span></div>
+        <div class="card-body">
+          <div class="quick-actions">
+            <div class="action-btn" onclick="showModal('invoiceModal')"><div class="icon">🧾</div><div class="label">فاتورة جديدة</div></div>
+            <div class="action-btn" onclick="showModal('clientModal')"><div class="icon">👤</div><div class="label">إضافة عميل</div></div>
+            <div class="action-btn" onclick="showModal('bondModal')"><div class="icon">📋</div><div class="label">سند جديد</div></div>
+            <div class="action-btn" onclick="showPage('reports')"><div class="icon">📊</div><div class="label">تقرير مالي</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page-view" id="page-clients">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">👥 قائمة العملاء</span>
+          <button class="btn-primary" onclick="showModal('clientModal')">➕ عميل جديد</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table>
+            <thead><tr><th>الاسم</th><th>النوع</th><th>الهاتف</th><th>البريد</th><th>الحالة</th><th>مستندات</th><th>حذف</th></tr></thead>
+            <tbody id="clientsTbody"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">⏳ جاري التحميل...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BONDS -->
+    <div class="page-view" id="page-bonds">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📋 السندات المالية</span>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-pdf" onclick="printPDF('bonds')">🖨️ طباعة PDF</button>
+            <button class="btn-primary" onclick="showModal('bondModal')">➕ سند جديد</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table>
+            <thead><tr><th>رقم السند</th><th>النوع</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th><th>الحالة</th><th>حذف</th></tr></thead>
+            <tbody id="bondsTbody"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">⏳ جاري التحميل...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVOICES -->
+    <div class="page-view" id="page-invoices">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🧾 إدارة الفواتير</span>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-pdf" onclick="printPDF('invoices')">🖨️ طباعة PDF</button>
+            <button class="btn-primary" onclick="showModal('invoiceModal')">➕ فاتورة جديدة</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table>
+            <thead><tr><th>رقم الفاتورة</th><th>العميل</th><th>إصدار</th><th>استحقاق</th><th>المبلغ</th><th>الضريبة</th><th>الحالة</th><th>حذف</th></tr></thead>
+            <tbody id="invoicesTbody"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">⏳ جاري التحميل...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page-view" id="page-users">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">👤 إدارة المستخدمين</span>
+          <button class="btn-primary" onclick="showModal('userModal')">➕ مستخدم جديد</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table>
+            <thead><tr><th>المستخدم</th><th>البريد</th><th>الدور</th><th>آخر دخول</th><th>الحالة</th><th>تفعيل / قفل</th><th>صلاحيات</th><th>حذف</th></tr></thead>
+            <tbody id="usersTbody"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">⏳ جاري التحميل...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page-view" id="page-reports">
+      <div class="stats-grid">
+        <div class="stat-card green"><div class="stat-icon">📈</div><div class="stat-value">٨.٥٪</div><div class="stat-label">نمو الإيرادات</div></div>
+        <div class="stat-card gold"><div class="stat-icon">📉</div><div class="stat-value">٣.٢٪</div><div class="stat-label">معدل المتأخرات</div></div>
+        <div class="stat-card blue"><div class="stat-icon">💳</div><div class="stat-value">٩٤٪</div><div class="stat-label">معدل التحصيل</div></div>
+        <div class="stat-card red"><div class="stat-icon">📦</div><div class="stat-value">٤٨</div><div class="stat-label">فواتير مفتوحة</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📊 الإيرادات الشهرية</span>
+          <button class="btn-pdf" onclick="printPDF('reports')">🖨️ طباعة PDF</button>
+        </div>
+        <div class="card-body">
+          <div style="margin-bottom:8px;font-size:12px;color:var(--muted)">الإيرادات لعام 2026 (بالريال)</div>
+          <div class="mini-chart" style="height:140px;">
+            <div class="bar" style="height:60%"></div><div class="bar highlight" style="height:100%"></div>
+            <div class="bar" style="height:40%"></div><div class="bar" style="height:25%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page-view" id="page-settings">
+      <div class="card"><div class="card-body">
+        <div class="settings-section">
+          <div class="settings-title">🏢 معلومات الشركة</div>
+          <div class="form-group"><label class="form-label">اسم الشركة</label><input class="form-input" value="نظام التمويل المحاسبي" /></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">رقم السجل التجاري</label><input class="form-input" placeholder="١٠٣٢XXXXXX" /></div>
+            <div class="form-group"><label class="form-label">رقم ضريبة القيمة المضافة</label><input class="form-input" placeholder="٣٠٠XXXXXXXXX" /></div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-title">🔔 الإشعارات</div>
+          <div class="settings-item"><div><div class="settings-label">تنبيه الفواتير المتأخرة</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-item"><div><div class="settings-label">تقرير شهري تلقائي</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <button class="btn-primary">💾 حفظ التغييرات</button>
+      </div></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- MODALS                                     -->
+<!-- ══════════════════════════════════════════ -->
+
+<!-- Invoice Modal -->
+<div class="modal-overlay" id="invoiceModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">🧾 فاتورة جديدة</span><button class="modal-close" onclick="closeModal('invoiceModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">العميل</label>
+        <select class="form-select client-select" id="invClient"><option value="">— اختر العميل —</option></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">تاريخ الإصدار</label><input class="form-input" type="date" id="invIssueDate" /></div>
+        <div class="form-group"><label class="form-label">تاريخ الاستحقاق</label><input class="form-input" type="date" id="invDueDate" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">طريقة الدفع</label>
+        <select class="form-select" id="invMethod">
+          <option value="تحويل بنكي">تحويل بنكي</option><option value="نقداً">نقداً</option><option value="شيك">شيك</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">الوصف</label><input class="form-input" id="invDesc" placeholder="مثال: خدمات استشارية" /></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">المبلغ (ريال)</label><input class="form-input" type="number" id="invAmount" placeholder="0.00" /></div>
+        <div class="form-group"><label class="form-label">نسبة الضريبة (%)</label><input class="form-input" type="number" id="invTax" value="15" /></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('invoiceModal')">إلغاء</button>
+      <button class="btn-primary" onclick="saveInvoice()">✅ حفظ الفاتورة</button>
+    </div>
+  </div>
+</div>
+
+<!-- Client Modal -->
+<div class="modal-overlay" id="clientModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">👤 عميل جديد</span><button class="modal-close" onclick="closeModal('clientModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">اسم العميل / الشركة</label><input class="form-input" id="clientName" placeholder="مثال: شركة الفلاح" /></div>
+        <div class="form-group"><label class="form-label">نوع العميل</label>
+          <select class="form-select" id="clientType">
+            <option value="company">شركة</option><option value="institution">مؤسسة</option><option value="individual">فرد</option><option value="group">مجموعة</option>
+          </select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">رقم الجوال</label><input class="form-input" id="clientPhone" placeholder="05XXXXXXXX" /></div>
+        <div class="form-group"><label class="form-label">البريد الإلكتروني</label><input class="form-input" id="clientEmail" placeholder="email@example.com" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">العنوان</label><input class="form-input" id="clientAddress" placeholder="المدينة، الحي، الشارع" /></div>
+
+      <!-- مستندات العميل (1-3) -->
+      <div class="form-group">
+        <label class="form-label">📎 المستندات المرفقة (من 1 إلى 3 مستندات)</label>
+        <div class="doc-upload-area" onclick="document.getElementById('docInput').click()">
+          <input type="file" id="docInput" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleDocUpload(event)" />
+          <div style="font-size:28px;margin-bottom:8px">📂</div>
+          <div style="font-size:13px;font-weight:600">اضغط لرفع المستندات</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">PDF, صور, Word — بحد أقصى 3 ملفات</div>
+        </div>
+        <div class="doc-list" id="docList"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('clientModal')">إلغاء</button>
+      <button class="btn-primary" onclick="saveClient()">✅ إضافة العميل</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bond Modal -->
+<div class="modal-overlay" id="bondModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">📋 سند جديد</span><button class="modal-close" onclick="closeModal('bondModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">نوع السند</label>
+          <select class="form-select" id="bondType">
+            <option value="receipt">سند قبض</option><option value="payment">سند صرف</option><option value="guarantee">سند ضمان</option>
+          </select></div>
+        <div class="form-group"><label class="form-label">التاريخ</label><input class="form-input" type="date" id="bondDate" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">العميل / الجهة</label>
+        <select class="form-select client-select" id="bondClient"><option value="">— اختر —</option></select></div>
+      <div class="form-group"><label class="form-label">المبلغ (ريال)</label><input class="form-input" type="number" id="bondAmount" placeholder="0.00" /></div>
+      <div class="form-group"><label class="form-label">البيان / الوصف</label><input class="form-input" id="bondDesc" placeholder="مثال: سداد دفعة أولى..." /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('bondModal')">إلغاء</button>
+      <button class="btn-primary" onclick="saveBond()">✅ حفظ السند</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal (مستخدم جديد + صلاحيات) -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">👤 مستخدم جديد</span><button class="modal-close" onclick="closeModal('userModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">الاسم الكامل</label><input class="form-input" id="newUserName" placeholder="مثال: أحمد محمد" /></div>
+        <div class="form-group"><label class="form-label">الدور</label>
+          <select class="form-select" id="newUserRole">
+            <option value="admin">مدير النظام</option>
+            <option value="accountant">محاسب</option>
+            <option value="supervisor">مشرف</option>
+            <option value="viewer">مشاهدة فقط</option>
+          </select></div>
+      </div>
+      <div class="form-group"><label class="form-label">البريد الإلكتروني</label><input class="form-input" id="newUserEmail" placeholder="email@example.com" /></div>
+      <div class="form-group"><label class="form-label">كلمة المرور</label><input class="form-input" type="password" id="newUserPass" placeholder="••••••••" /></div>
+      <div class="form-group">
+        <label class="form-label">🔐 الصلاحيات</label>
+        <div class="perm-grid">
+          <div class="perm-item"><span class="perm-label">👥 العملاء</span><div class="toggle on" id="perm_clients" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">🧾 الفواتير</span><div class="toggle on" id="perm_invoices" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">📋 السندات</span><div class="toggle on" id="perm_bonds" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">📊 التقارير</span><div class="toggle on" id="perm_reports" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">⚙️ الإعدادات</span><div class="toggle" id="perm_settings" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">👤 المستخدمون</span><div class="toggle" id="perm_users" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('userModal')">إلغاء</button>
+      <button class="btn-primary" onclick="saveUser()">✅ إضافة المستخدم</button>
+    </div>
+  </div>
+</div>
+
+<!-- Permissions Edit Modal -->
+<div class="modal-overlay" id="permModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">🔐 تعديل صلاحيات: <span id="permUserName"></span></span><button class="modal-close" onclick="closeModal('permModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="permUserId" />
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">حالة الحساب</label>
+        <select class="form-select" id="permStatus">
+          <option value="active">نشط ✅</option>
+          <option value="suspended">موقوف 🔒</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">🔐 الصلاحيات</label>
+        <div class="perm-grid">
+          <div class="perm-item"><span class="perm-label">👥 العملاء</span><div class="toggle on" id="ep_clients" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">🧾 الفواتير</span><div class="toggle on" id="ep_invoices" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">📋 السندات</span><div class="toggle on" id="ep_bonds" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">📊 التقارير</span><div class="toggle on" id="ep_reports" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">⚙️ الإعدادات</span><div class="toggle" id="ep_settings" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-item"><span class="perm-label">👤 المستخدمون</span><div class="toggle" id="ep_users" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('permModal')">إلغاء</button>
+      <button class="btn-primary" onclick="savePermissions()">💾 حفظ الصلاحيات</button>
+    </div>
+  </div>
+</div>
+
+<!-- Print Area (hidden, shown on print) -->
+<div class="print-area" id="printArea"></div>
+
+<script>
+// ── Supabase ──────────────────────────────────
+const SUPABASE_URL = 'https://aguankyvwvuhkxsvutiz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_BriOLLFuGzdPHtIMZHJGYg_0wJKy4kD';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let uploadedDocs = []; // مستندات العميل المرفقة
+
+// ── PANEL SWITCH ─────────────────────────────
+function switchPanel(panel) {
+  ['panelLogin','panelRegister','panelForgot'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === 'panel' + panel.charAt(0).toUpperCase() + panel.slice(1));
+  });
+  ['loginError','regError','regSuccess','forgotError','forgotSuccess'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+}
+
+// ── FORGOT PASSWORD ───────────────────────────
+async function doForgot() {
+  const email   = document.getElementById('forgotEmail').value.trim();
+  const errEl   = document.getElementById('forgotError');
+  const sucEl   = document.getElementById('forgotSuccess');
+  errEl.classList.remove('show'); sucEl.classList.remove('show');
+
+  if (!email) {
+    errEl.textContent = 'يرجى إدخال البريد الإلكتروني';
+    errEl.classList.add('show'); return;
+  }
+
+  // تحقق أن البريد موجود في النظام
+  const { data: users } = await sb.from('users').select('id,email').eq('email', email).limit(1);
+  if (!users || users.length === 0) {
+    errEl.textContent = 'البريد الإلكتروني غير مسجّل في النظام';
+    errEl.classList.add('show'); return;
+  }
+
+  // إرسال إيميل الاستعادة عبر Supabase Auth
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href.split('?')[0] + '?reset=true'
+  });
+
+  if (error) {
+    errEl.textContent = 'خطأ في الإرسال: ' + error.message;
+    errEl.classList.add('show'); return;
+  }
+
+  sucEl.classList.add('show');
+  document.getElementById('forgotEmail').value = '';
+}
+
+// ── RESET PASSWORD (عند العودة من الإيميل) ────
+async function checkResetMode() {
+  const hash = window.location.hash;
+  if (hash.includes('access_token') || new URLSearchParams(window.location.search).get('reset')) {
+    // استخراج الـ token من الرابط
+    const params = new URLSearchParams(hash.replace('#',''));
+    const accessToken = params.get('access_token');
+    if (accessToken) {
+      showResetForm(accessToken);
+    }
+  }
+}
+
+function showResetForm(token) {
+  // إضافة panel إعادة التعيين ديناميكياً
+  const box = document.querySelector('.login-box');
+  box.innerHTML = `
+    <div style="font-size:40px;margin-bottom:16px;">🔐</div>
+    <h2>تعيين كلمة مرور جديدة</h2>
+    <p>أدخل كلمة المرور الجديدة</p>
+    <div class="form-group">
+      <label class="form-label">كلمة المرور الجديدة</label>
+      <input class="form-input" id="newPass1" type="password" placeholder="••••••••" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">تأكيد كلمة المرور</label>
+      <input class="form-input" id="newPass2" type="password" placeholder="••••••••" />
+    </div>
+    <button class="login-btn" onclick="doResetPassword('${token}')">✅ تعيين كلمة المرور</button>
+    <div class="login-error" id="resetError"></div>
+    <div class="login-success" id="resetSuccess">✅ تم تغيير كلمة المرور! يمكنك الدخول الآن.</div>
+  `;
+}
+
+async function doResetPassword(token) {
+  const pass1 = document.getElementById('newPass1').value.trim();
+  const pass2 = document.getElementById('newPass2').value.trim();
+  const errEl = document.getElementById('resetError');
+  errEl.classList.remove('show');
+
+  if (!pass1 || !pass2) { errEl.textContent='يرجى تعبئة الحقلين'; errEl.classList.add('show'); return; }
+  if (pass1 !== pass2)   { errEl.textContent='كلمتا المرور غير متطابقتين'; errEl.classList.add('show'); return; }
+  if (pass1.length < 6)  { errEl.textContent='كلمة المرور يجب أن تكون 6 أحرف على الأقل'; errEl.classList.add('show'); return; }
+
+  // تحديث كلمة المرور في جدول users أيضاً
+  const { data: { user }, error } = await sb.auth.updateUser({ password: pass1 });
+  if (error) { errEl.textContent='خطأ: '+error.message; errEl.classList.add('show'); return; }
+
+  // تحديث password_plain في جدول users
+  if (user?.email) {
+    await sb.from('users').update({ password_plain: pass1 }).eq('email', user.email);
+  }
+
+  document.getElementById('resetSuccess').classList.add('show');
+  setTimeout(() => {
+    window.location.href = window.location.href.split('#')[0].split('?')[0];
+  }, 2500);
+}
+
+// ── REGISTER ─────────────────────────────────
+async function doRegister() {
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value.trim();
+  const pass2 = document.getElementById('regPass2').value.trim();
+  const errEl = document.getElementById('regError');
+  const sucEl = document.getElementById('regSuccess');
+  errEl.classList.remove('show'); sucEl.classList.remove('show');
+
+  if (!name || !email || !pass) { errEl.textContent='يرجى تعبئة جميع الحقول'; errEl.classList.add('show'); return; }
+  if (pass !== pass2) { errEl.textContent='كلمتا المرور غير متطابقتين'; errEl.classList.add('show'); return; }
+  if (pass.length < 6) { errEl.textContent='كلمة المرور يجب أن تكون 6 أحرف على الأقل'; errEl.classList.add('show'); return; }
+
+  // تحقق من عدم تكرار البريد
+  const {data:existing} = await sb.from('users').select('id').eq('email', email).limit(1);
+  if (existing && existing.length > 0) { errEl.textContent='البريد الإلكتروني مستخدم مسبقاً'; errEl.classList.add('show'); return; }
+
+  const {error} = await sb.from('users').insert([{
+    name, email, password_plain: pass,
+    role: 'accountant', role_label: 'محاسب',
+    status: 'suspended', // ينتظر موافقة المدير
+    permissions: {clients:true, invoices:true, bonds:true, reports:true, settings:false, users:false}
+  }]);
+  if (error) { errEl.textContent='خطأ في الإنشاء: '+error.message; errEl.classList.add('show'); return; }
+  sucEl.classList.add('show');
+  // مسح الحقول
+  ['regName','regEmail','regPass','regPass2'].forEach(id => document.getElementById(id).value='');
+  setTimeout(() => switchPanel('login'), 3000);
+}
+
+// ── LOGIN ─────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value.trim();
+  const err   = document.getElementById('loginError');
+  err.classList.remove('show');
+  if (!email || !pass) { err.textContent = 'يرجى تعبئة البريد وكلمة المرور'; err.classList.add('show'); return; }
+
+  const { data, error } = await sb.from('users')
+    .select('*').eq('email', email).eq('status', 'active').limit(1);
+
+  if (error || !data || data.length === 0) {
+    err.textContent = 'البريد الإلكتروني غير موجود أو الحساب موقوف';
+    err.classList.add('show'); return;
+  }
+
+  const user = data[0];
+  // تحقق بسيط من كلمة المرور (في الإنتاج استخدم Supabase Auth)
+  if (user.password_plain && user.password_plain !== pass) {
+    err.textContent = 'كلمة المرور غير صحيحة'; err.classList.add('show'); return;
+  }
+
+  currentUser = user;
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('sidebarName').textContent = user.name;
+  document.getElementById('sidebarRole').textContent = user.role_label;
+  document.getElementById('sidebarAvatar').textContent = user.name?.charAt(0) || 'م';
+  document.getElementById('pageSubtitle').textContent = 'مرحباً ' + user.name + ' — ' + new Date().toLocaleDateString('ar-SA');
+
+  // إخفاء المستخدمين إذا ليس admin
+  if (user.role !== 'admin') document.getElementById('navUsers').style.display = 'none';
+
+  await sb.from('users').update({ last_login: new Date().toISOString() }).eq('id', user.id);
+  loadDashboard();
+  loadClients();
+}
+
+function doLogout() {
+  if (!confirm('هل تريد تسجيل الخروج؟')) return;
+  currentUser = null;
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+// ── NAVIGATION ────────────────────────────────
+const pages = { dashboard:'لوحة التحكم', clients:'إدارة العملاء', bonds:'السندات المالية', invoices:'إدارة الفواتير', users:'إدارة المستخدمين', reports:'التقارير المالية', settings:'الإعدادات' };
+
+function showPage(id) {
+  document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id)?.classList.add('active');
+  document.getElementById('pageTitle').textContent = pages[id] || id;
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes("'" + id + "'")) n.classList.add('active');
+  });
+  if (id === 'dashboard') loadDashboard();
+  if (id === 'clients')   loadClients();
+  if (id === 'invoices')  loadInvoices();
+  if (id === 'bonds')     loadBonds();
+  if (id === 'users')     loadUsers();
+}
+
+function showModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('active'); });
+});
+
+// ── TOAST ─────────────────────────────────────
+function toast(msg, type='success') {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;left:24px;z-index:9999;background:${type==='success'?'#00d4aa':'#ff6b6b'};color:#0a1628;padding:12px 20px;border-radius:10px;font-family:Cairo,sans-serif;font-weight:700;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,.3);animation:fadeIn .3s ease;`;
+  t.textContent = (type==='success'?'✅ ':'❌ ') + msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function showLoading(id) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">⏳ جاري التحميل...</td></tr>`;
+}
+
+function statusBadge(status, label) {
+  const m = {paid:'status-paid',مدفوعة:'status-paid',completed:'status-paid',مكتمل:'status-paid',active:'status-paid',نشط:'status-paid',pending:'status-pending',معلقة:'status-pending',معلق:'status-pending',overdue:'status-overdue',متأخرة:'status-overdue',متأخر:'status-overdue',suspended:'status-overdue',موقوف:'status-overdue'};
+  return `<span class="status-badge ${m[status]||m[label]||'status-pending'}">${label||status}</span>`;
+}
+
+// ── DASHBOARD ─────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [inv, clients] = await Promise.all([
+      sb.from('invoices').select('*'),
+      sb.from('clients').select('id,name,type_label'),
+    ]);
+    const invoices = inv.data || [];
+    const totalRevenue   = invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+(+i.total||0),0);
+    const activeInvoices = invoices.filter(i=>['pending','overdue'].includes(i.status)).length;
+    const overdueAmount  = invoices.filter(i=>i.status==='overdue').reduce((s,i)=>s+(+i.total||0),0);
+    const totalClients   = (clients.data||[]).length;
+
+    document.getElementById('dashStats').innerHTML = `
+      <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">${totalRevenue.toLocaleString('ar-SA')}</div><div class="stat-label">إجمالي الإيرادات (ريال)</div></div>
+      <div class="stat-card gold"><div class="stat-icon">📋</div><div class="stat-value">${activeInvoices}</div><div class="stat-label">الفواتير النشطة</div></div>
+      <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value">${totalClients}</div><div class="stat-label">إجمالي العملاء</div></div>
+      <div class="stat-card red"><div class="stat-icon">⚠️</div><div class="stat-value">${overdueAmount.toLocaleString('ar-SA')}</div><div class="stat-label">مستحقات متأخرة (ريال)</div></div>`;
+
+    const clientMap = {};
+    (clients.data||[]).forEach(c => clientMap[c.id] = c.name);
+    const recent = [...invoices].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
+    document.getElementById('recentInvoicesTbody').innerHTML = recent.map(i=>`
+      <tr><td style="color:var(--accent)">${i.invoice_number||'-'}</td><td>${clientMap[i.client_id]||'-'}</td>
+      <td>${(+i.total||0).toLocaleString('ar-SA')} ر</td><td>${statusBadge(i.status,i.status_label)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted)">لا توجد فواتير</td></tr>';
+  } catch(e) { console.error(e); }
+}
+
+// ── CLIENTS ───────────────────────────────────
+async function loadClients() {
+  showLoading('clientsTbody');
+  const { data } = await sb.from('clients').select('*').order('created_at',{ascending:false});
+  const tbody = document.getElementById('clientsTbody');
+  tbody.innerHTML = (data||[]).map(c=>`
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.type_label||'-'}</td>
+      <td>${c.phone||'-'}</td>
+      <td style="color:var(--muted)">${c.email||'-'}</td>
+      <td>${statusBadge(c.status, c.status==='active'?'نشط':'معلق')}</td>
+      <td>
+        ${c.docs ? JSON.parse(c.docs||'[]').map(d=>`<span style="background:rgba(0,212,170,0.1);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:11px;margin:2px;">📎 ${d}</span>`).join('') : '<span style="color:var(--muted);font-size:11px">لا يوجد</span>'}
+      </td>
+      <td><button onclick="deleteClient(${c.id})" style="background:rgba(255,107,107,0.15);color:#ff6b6b;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">حذف</button></td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">لا يوجد عملاء</td></tr>';
+  const options = (data||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.querySelectorAll('.client-select').forEach(s => s.innerHTML = '<option value="">— اختر —</option>' + options);
+}
+
+// مستندات العميل
+function handleDocUpload(e) {
+  const files = Array.from(e.target.files);
+  const remaining = 3 - uploadedDocs.length;
+  if (remaining <= 0) { toast('الحد الأقصى 3 مستندات', 'error'); return; }
+  const toAdd = files.slice(0, remaining);
+  if (files.length > remaining) toast(`تم قبول ${remaining} ملفات فقط (الحد الأقصى 3)`, 'error');
+  toAdd.forEach(f => { if (!uploadedDocs.find(d=>d.name===f.name)) uploadedDocs.push(f); });
+  renderDocList();
+}
+
+function renderDocList() {
+  const list = document.getElementById('docList');
+  list.innerHTML = uploadedDocs.map((f,i) => `
+    <div class="doc-item">
+      <span class="doc-name">📎 ${f.name}</span>
+      <span style="color:var(--muted);font-size:11px">${(f.size/1024).toFixed(1)} KB</span>
+      <button class="doc-remove" onclick="removeDoc(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removeDoc(i) { uploadedDocs.splice(i,1); renderDocList(); }
+
+async function saveClient() {
+  const name = document.getElementById('clientName').value.trim();
+  if (!name) { toast('اسم العميل مطلوب', 'error'); return; }
+  if (uploadedDocs.length === 0) { toast('يرجى إرفاق مستند واحد على الأقل', 'error'); return; }
+  const typeLabels = {company:'شركة',institution:'مؤسسة',individual:'فرد',group:'مجموعة'};
+  const type = document.getElementById('clientType').value;
+  const docNames = JSON.stringify(uploadedDocs.map(f=>f.name));
+  const { error } = await sb.from('clients').insert([{
+    name, type, type_label:typeLabels[type]||'شركة',
+    phone: document.getElementById('clientPhone').value.trim(),
+    email: document.getElementById('clientEmail').value.trim(),
+    address: document.getElementById('clientAddress').value.trim(),
+    docs: docNames
+  }]);
+  if (error) { toast('خطأ في الحفظ: '+error.message,'error'); return; }
+  toast('تم إضافة العميل بنجاح');
+  closeModal('clientModal');
+  uploadedDocs = [];
+  document.getElementById('docList').innerHTML = '';
+  ['clientName','clientPhone','clientEmail','clientAddress'].forEach(id=>document.getElementById(id).value='');
+  loadClients();
+}
+
+async function deleteClient(id) {
+  if (!confirm('هل تريد حذف هذا العميل؟')) return;
+  const { error } = await sb.from('clients').delete().eq('id',id);
+  if (error) { toast('لا يمكن حذف العميل','error'); return; }
+  toast('تم حذف العميل'); loadClients();
+}
+
+// ── INVOICES ──────────────────────────────────
+let invoicesData = [];
+async function loadInvoices() {
+  showLoading('invoicesTbody');
+  const { data } = await sb.from('invoices').select('*, clients(name)').order('created_at',{ascending:false});
+  invoicesData = data || [];
+  const tbody = document.getElementById('invoicesTbody');
+  tbody.innerHTML = invoicesData.map(i=>`
+    <tr>
+      <td style="color:var(--accent)">${i.invoice_number||'-'}</td>
+      <td>${i.clients?.name||'-'}</td>
+      <td>${i.issue_date||'-'}</td><td>${i.due_date||'-'}</td>
+      <td>${(+i.total||0).toLocaleString('ar-SA')} ر</td>
+      <td>${(+i.tax_amount||0).toLocaleString('ar-SA')} ر</td>
+      <td>${statusBadge(i.status,i.status_label)}</td>
+      <td><button onclick="deleteInvoice(${i.id})" style="background:rgba(255,107,107,0.15);color:#ff6b6b;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">حذف</button></td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">لا توجد فواتير</td></tr>';
+}
+
+async function saveInvoice() {
+  const clientId=document.getElementById('invClient').value, issueDate=document.getElementById('invIssueDate').value;
+  const dueDate=document.getElementById('invDueDate').value, amount=parseFloat(document.getElementById('invAmount').value)||0;
+  const taxRate=parseFloat(document.getElementById('invTax').value)||15, desc=document.getElementById('invDesc').value;
+  const method=document.getElementById('invMethod').value;
+  if (!clientId||!issueDate||!dueDate||!amount) { toast('يرجى تعبئة جميع الحقول','error'); return; }
+  const taxAmount=Math.round(amount*taxRate/100*100)/100, total=Math.round((amount+taxAmount)*100)/100;
+  const {data:last}=await sb.from('invoices').select('id').order('id',{ascending:false}).limit(1);
+  const invNum='#'+String(((last?.[0]?.id)||0)+1).padStart(4,'0');
+  const {error}=await sb.from('invoices').insert([{invoice_number:invNum,client_id:+clientId,issue_date:issueDate,due_date:dueDate,description:desc,amount,tax_rate:taxRate,tax_amount:taxAmount,total,payment_method:method,status:'pending',status_label:'معلقة'}]);
+  if (error) { toast('خطأ في الحفظ','error'); return; }
+  toast('تم إنشاء الفاتورة '+invNum); closeModal('invoiceModal'); loadInvoices(); loadDashboard();
+}
+
+async function deleteInvoice(id) {
+  if (!confirm('هل تريد حذف هذه الفاتورة؟')) return;
+  await sb.from('invoices').delete().eq('id',id); toast('تم حذف الفاتورة'); loadInvoices();
+}
+
+// ── BONDS ─────────────────────────────────────
+let bondsData = [];
+async function loadBonds() {
+  showLoading('bondsTbody');
+  const {data}=await sb.from('bonds').select('*, clients(name)').order('created_at',{ascending:false});
+  bondsData = data || [];
+  const tbody=document.getElementById('bondsTbody');
+  tbody.innerHTML=bondsData.map(b=>`
+    <tr>
+      <td style="color:var(--accent)">${b.bond_number||'-'}</td>
+      <td>${b.type_label||'-'}</td><td>${b.clients?.name||'-'}</td>
+      <td>${(+b.amount||0).toLocaleString('ar-SA')} ر</td>
+      <td>${b.bond_date||'-'}</td>
+      <td>${statusBadge(b.status,b.status_label)}</td>
+      <td><button onclick="deleteBond(${b.id})" style="background:rgba(255,107,107,0.15);color:#ff6b6b;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">حذف</button></td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">لا توجد سندات</td></tr>';
+}
+
+async function saveBond() {
+  const type=document.getElementById('bondType').value, clientId=document.getElementById('bondClient').value;
+  const amount=parseFloat(document.getElementById('bondAmount').value)||0, bondDate=document.getElementById('bondDate').value;
+  const desc=document.getElementById('bondDesc').value;
+  if (!clientId||!amount||!bondDate) { toast('يرجى تعبئة جميع الحقول','error'); return; }
+  const typeLabels={receipt:'سند قبض',payment:'سند صرف',guarantee:'سند ضمان'};
+  const {data:last}=await sb.from('bonds').select('id').order('id',{ascending:false}).limit(1);
+  const bondNum='#س'+String(((last?.[0]?.id)||0)+1).padStart(3,'0');
+  const {error}=await sb.from('bonds').insert([{bond_number:bondNum,type,type_label:typeLabels[type]||'سند قبض',client_id:+clientId,amount,bond_date:bondDate,description:desc,status:'pending',status_label:'معلق'}]);
+  if (error) { toast('خطأ في الحفظ','error'); return; }
+  toast('تم إنشاء السند '+bondNum); closeModal('bondModal'); loadBonds();
+}
+
+async function deleteBond(id) {
+  if (!confirm('هل تريد حذف هذا السند؟')) return;
+  await sb.from('bonds').delete().eq('id',id); toast('تم حذف السند'); loadBonds();
+}
+
+// ── USERS + PERMISSIONS ───────────────────────
+// ── BUILD USERS TABLE ────────────────────────
+function buildUsersTable(data) {
+  if (!data.length) return '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">لا يوجد مستخدمون</td></tr>';
+  
+  return data.map(function(u) {
+    var isActive = u.status === 'active';
+    var isSelf   = currentUser && currentUser.id === u.id;
+    var p = {};
+    try { p = typeof u.permissions === 'object' ? u.permissions : JSON.parse(u.permissions || '{}'); } catch(e){}
+
+    // زر القفل / الفتح
+    var lockBg    = isActive ? 'rgba(255,165,0,0.15)' : 'rgba(0,212,170,0.15)';
+    var lockColor = isActive ? '#f0a500' : 'var(--accent)';
+    var lockBorder= isActive ? 'rgba(255,165,0,0.3)' : 'rgba(0,212,170,0.3)';
+    var lockIcon  = isActive ? '🔒' : '🔓';
+    var lockTitle = isActive ? 'قفل الحساب' : 'فتح الحساب';
+    var safeName  = u.name ? u.name.replace(/'/g,'') : '';
+    
+    var lockBtn = '<button onclick="toggleUserLock(' + u.id + ',\'' + u.status + '\',\'' + safeName + '\')" '
+      + 'title="' + lockTitle + '" '
+      + 'style="background:' + lockBg + ';color:' + lockColor + ';border:1px solid ' + lockBorder + ';'
+      + 'padding:6px 14px;border-radius:8px;cursor:pointer;font-size:16px;">'
+      + lockIcon + '</button>';
+
+    // زر الصلاحيات
+    var permsEncoded = encodeURIComponent(JSON.stringify(p));
+    var permBtn = '<button onclick="openPermModal(' + u.id + ',\'' + safeName + '\',\'' + u.status + '\')" '
+      + 'style="background:rgba(74,158,255,0.15);color:#4a9eff;border:1px solid rgba(74,158,255,0.3);'
+      + 'padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:Cairo,sans-serif;">⚙️ صلاحيات</button>';
+
+    // زر الحذف
+    var deleteBtn = isSelf
+      ? '<span style="font-size:11px;color:var(--muted)">—</span>'
+      : '<button onclick="deleteUser(' + u.id + ',\'' + safeName + '\')" '
+        + 'style="background:rgba(255,107,107,0.15);color:#ff6b6b;border:1px solid rgba(255,107,107,0.2);'
+        + 'padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:Cairo,sans-serif;">🗑️ حذف</button>';
+
+    var selfTag = isSelf ? ' <span style="font-size:10px;color:var(--accent)">(أنت)</span>' : '';
+
+    return '<tr>'
+      + '<td><div style="display:flex;align-items:center;gap:10px;">'
+      + '<div class="avatar" style="width:32px;height:32px;font-size:12px;">' + (u.name ? u.name.charAt(0) : '؟') + '</div>'
+      + '<span>' + (u.name || '-') + selfTag + '</span></div></td>'
+      + '<td style="color:var(--muted)">' + (u.email || '-') + '</td>'
+      + '<td>' + statusBadge(u.role, u.role_label) + '</td>'
+      + '<td>' + (u.last_login ? new Date(u.last_login).toLocaleDateString('ar-SA') : 'لم يسجل بعد') + '</td>'
+      + '<td>' + statusBadge(u.status, isActive ? 'نشط' : 'موقوف') + '</td>'
+      + '<td>' + lockBtn + '</td>'
+      + '<td>' + permBtn + '</td>'
+      + '<td>' + deleteBtn + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+async function toggleUserLock(id, currentStatus, name) {
+  const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+  const action = newStatus === 'suspended' ? 'قفل' : 'فتح';
+  if (!confirm(`هل تريد ${action} حساب "${name}"؟`)) return;
+  const { error } = await sb.from('users').update({ status: newStatus }).eq('id', id);
+  if (error) { toast('خطأ في التحديث', 'error'); return; }
+  toast(`تم ${action} الحساب بنجاح`);
+  loadUsers();
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`⚠️ هل أنت متأكد من حذف مستخدم "${name}"؟
+لا يمكن التراجع عن هذا الإجراء.`)) return;
+  const { error } = await sb.from('users').delete().eq('id', id);
+  if (error) { toast('خطأ في الحذف: ' + error.message, 'error'); return; }
+  toast('تم حذف المستخدم بنجاح');
+  loadUsers();
+}
+
+async function loadUsers() {
+  showLoading('usersTbody');
+  const {data}=await sb.from('users').select('*').order('created_at',{ascending:false});
+  const tbody=document.getElementById('usersTbody');
+  tbody.innerHTML = buildUsersTable(data || []);
+}
+
+async function saveUser() {
+  const name=document.getElementById('newUserName').value.trim();
+  const email=document.getElementById('newUserEmail').value.trim();
+  const pass=document.getElementById('newUserPass').value.trim();
+  const role=document.getElementById('newUserRole').value;
+  if (!name||!email||!pass) { toast('يرجى تعبئة جميع الحقول','error'); return; }
+  const roleLabels={admin:'مدير النظام',accountant:'محاسب',supervisor:'مشرف',viewer:'مشاهدة فقط'};
+  const perms = {
+    clients:  document.getElementById('perm_clients').classList.contains('on'),
+    invoices: document.getElementById('perm_invoices').classList.contains('on'),
+    bonds:    document.getElementById('perm_bonds').classList.contains('on'),
+    reports:  document.getElementById('perm_reports').classList.contains('on'),
+    settings: document.getElementById('perm_settings').classList.contains('on'),
+    users:    document.getElementById('perm_users').classList.contains('on'),
+  };
+  const {error}=await sb.from('users').insert([{name,email,password_plain:pass,role,role_label:roleLabels[role]||'محاسب',status:'active',permissions:perms}]);
+  if (error) { toast('خطأ: '+error.message,'error'); return; }
+  toast('تم إضافة المستخدم بنجاح'); closeModal('userModal'); loadUsers();
+}
+
+async function openPermModal(id, name, status) {
+  document.getElementById('permUserId').value = id;
+  document.getElementById('permUserName').textContent = name;
+  document.getElementById('permStatus').value = status || 'active';
+
+  // جلب الصلاحيات من قاعدة البيانات مباشرة
+  const { data } = await sb.from('users').select('permissions').eq('id', id).limit(1);
+  let p = {};
+  try {
+    const raw = data && data[0] ? data[0].permissions : null;
+    if (raw && typeof raw === 'object') p = raw;
+    else if (raw && typeof raw === 'string') p = JSON.parse(raw);
+  } catch(e) { p = {}; }
+
+  ['clients','invoices','bonds','reports','settings','users'].forEach(function(k) {
+    var el = document.getElementById('ep_'+k);
+    if (el) el.classList.toggle('on', p[k] !== false);
+  });
+  showModal('permModal');
+}
+
+async function savePermissions() {
+  const id = document.getElementById('permUserId').value;
+  const status = document.getElementById('permStatus').value;
+  const perms = {
+    clients:  document.getElementById('ep_clients').classList.contains('on'),
+    invoices: document.getElementById('ep_invoices').classList.contains('on'),
+    bonds:    document.getElementById('ep_bonds').classList.contains('on'),
+    reports:  document.getElementById('ep_reports').classList.contains('on'),
+    settings: document.getElementById('ep_settings').classList.contains('on'),
+    users:    document.getElementById('ep_users').classList.contains('on'),
+  };
+  const {error}=await sb.from('users').update({permissions:perms, status}).eq('id',id);
+  if (error) { toast('خطأ في الحفظ','error'); return; }
+  toast('تم حفظ الصلاحيات بنجاح'); closeModal('permModal'); loadUsers();
+}
+
+// ── PDF PRINT ─────────────────────────────────
+function printPDF(type) {
+  const titles = {invoices:'تقرير الفواتير', bonds:'تقرير السندات', reports:'التقرير المالي'};
+  let tableHTML = '';
+  const date = new Date().toLocaleDateString('ar-SA');
+
+  if (type === 'invoices') {
+    tableHTML = `<table class="print-table">
+      <thead><tr><th>رقم الفاتورة</th><th>العميل</th><th>تاريخ الإصدار</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>الضريبة</th><th>الحالة</th></tr></thead>
+      <tbody>${invoicesData.map(i=>`<tr><td>${i.invoice_number||'-'}</td><td>${i.clients?.name||'-'}</td><td>${i.issue_date||'-'}</td><td>${i.due_date||'-'}</td><td>${(+i.total||0).toLocaleString('ar-SA')} ر</td><td>${(+i.tax_amount||0).toLocaleString('ar-SA')} ر</td><td>${i.status_label||'-'}</td></tr>`).join('')}</tbody>
+    </table>`;
+  } else if (type === 'bonds') {
+    tableHTML = `<table class="print-table">
+      <thead><tr><th>رقم السند</th><th>النوع</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th><th>الحالة</th></tr></thead>
+      <tbody>${bondsData.map(b=>`<tr><td>${b.bond_number||'-'}</td><td>${b.type_label||'-'}</td><td>${b.clients?.name||'-'}</td><td>${(+b.amount||0).toLocaleString('ar-SA')} ر</td><td>${b.bond_date||'-'}</td><td>${b.status_label||'-'}</td></tr>`).join('')}</tbody>
+    </table>`;
+  } else {
+    tableHTML = `<p style="font-size:14px;margin-top:10px;">تقرير ملخص للنظام المالي — بتاريخ ${date}</p>`;
+  }
+
+  document.getElementById('printArea').innerHTML = `
+    <div class="print-header">
+      <h1>نظام التمويل المحاسبي</h1>
+      <p>${titles[type]} — ${date}</p>
+    </div>
+    ${tableHTML}
+    <div class="print-footer">تم الطباعة بواسطة نظام التمويل المحاسبي — ${date}</div>`;
+
+  window.print();
+}
+
+// ── INIT ──────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  checkResetMode();
+});
+</script>
+</body>
+</html>
